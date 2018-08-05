@@ -1,5 +1,6 @@
 (ns code-pprint.core
   (:require [riddley.walk :refer [walk-exprs]]
+            [clojure.walk :refer [postwalk]]
             [zprint.core :as zp]))
 
 (defn- cast-to-symbol [v]
@@ -59,3 +60,29 @@
                            (fn [form] (simplify-qualification form ns-context))
                            form)
                {:style :community})))
+
+(defn pprint-no-macro-expand [form ns]
+  (let [seen (atom #{})
+        ns-context (ns->ns-context ns)]
+    (postwalk (fn [form]
+                (do
+                  (if (symbol? form)
+                      (swap! seen conj form))
+                  form))
+              form)
+    (let [blacklist (into #{} (for [form @seen
+                                    :let [simplified (simplify-qualification form ns-context)]
+                                    :when (and (not (= form simplified))
+                                               (contains? @seen simplified))]
+                                form))]
+      ;; TODO forward all the fancy zprint options
+      (zp/zprint (postwalk (fn [form]
+                          (if (or (and (symbol? form)
+                                       (let [simplified (simplify-qualification form ns-context)]
+                                         (and (not (= form simplified))
+                                              (not (contains? blacklist form)))))
+                                  (keyword? form))
+                            (simplify-qualification form ns-context) ;; TODO already calculated
+                            form))
+                        form)
+              {:style :community}))))

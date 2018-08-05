@@ -43,7 +43,6 @@
         *ns*)
 
 ;; name clash
-(pprint '(clojure.core/let [map 42] (clojure.core/map clojure.core/identity [1 2 3]))
-        *ns*)
-
-
+(code-pprint.core/pprint-no-macro-expand
+  '(clojure.core/let [map 42] (clojure.core/map clojure.core/identity [1 2 3]))
+  *ns*)
