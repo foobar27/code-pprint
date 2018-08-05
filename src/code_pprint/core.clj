@@ -50,16 +50,12 @@
 ;; TOOD allow to pass all the fancy options from zprint
 (defn pprint [form ns]
   (let [ns-context (ns->ns-context ns)]
-    ;; TODO verify symbol not in scope
-    (zp/zprint(walk-exprs (fn [form] (or (symbol? form) (keyword? form)))
-                          (fn [form] (simplify-qualification form ns-context))
-                          form)
-              {:style :community})))
-
-
-(zp/zprint-str `(defn foo# [x#] (str x# 42 ::x))
-               {:map {:lift-ns-in-code? true}
-                :style :community})
-
-(zp/zprint-str `(defn foo# [x#] (str x# 42))
-               {:style :community})
+    ;; TODO forward all the fancy zprint options
+    (zp/zprint (walk-exprs (fn [form] (or (and (symbol? form)
+                                               (let [simplified (simplify-qualification form ns-context)]
+                                                 (and (not (= form simplified))
+                                                      (not (contains? (riddley.compiler/locals) simplified)))))
+                                          (keyword? form)))
+                           (fn [form] (simplify-qualification form ns-context))
+                           form)
+               {:style :community})))

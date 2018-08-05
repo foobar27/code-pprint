@@ -36,6 +36,14 @@
       :clojure.test/test (keyword "t" "test")
       :unknown-ns/test (keyword "unknown-ns" "test")))) 
 
-;; TODO write test
-(pprint `(defn foo# [x#] (str x# 42 ::x :foo/bar))
+
+
+;; TODO write tests
+(pprint `(defn foo# [x#] (str x# 42 map ::x :foo/bar))
         *ns*)
+
+;; name clash
+(pprint '(clojure.core/let [map 42] (clojure.core/map clojure.core/identity [1 2 3]))
+        *ns*)
+
+
